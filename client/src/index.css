@@ -1,0 +1,36 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom fonts (place licensed files under /public/fonts) */
+@font-face {
+  font-family: "Neue Haas Grotesk Display Pro";
+  src: url("/fonts/NHaasGrotesk-65Md.woff2") format("woff2");
+  font-weight: 500 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Europa Grotesk No 2 SH";
+  src: url("/fonts/EuropaGroteskNo2SH-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --glass-5: rgba(255, 255, 255, 0.05);
+  --glass-10: rgba(255, 255, 255, 0.1);
+  --glass-15: rgba(255, 255, 255, 0.15);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-black text-white antialiased;
+}
+
+

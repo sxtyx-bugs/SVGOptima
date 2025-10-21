@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SVG Optimizer - Free Online SVG Compression Tool</title>
+    <meta name="description" content="Optimize and compress SVG files fast while preserving quality. No login, no data stored. Free and simple." />
+    <link rel="canonical" href="/" />
+    <link rel="stylesheet" href="/css/styles.css" />
+    <script src="https://checkout.razorpay.com/v1/checkout.js" defer></script>
+    <script src="/js/app.js" defer></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <h1>SVG Optimizer</h1>
+        <p class="tagline">Compress SVGs instantly. No login. No data stored.</p>
+      </div>
+    </header>
+
+    <main class="container">
+      <section class="upload-card">
+        <div id="dropzone" class="dropzone" tabindex="0">
+          <svg width="40" height="40" viewBox="0 0 24 24" aria-hidden="true">
+            <path fill="currentColor" d="M19 15v4H5v-4H3v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4zM17 8l-1.41-1.41L13 9.17V2h-2v7.17L8.41 6.59L7 8l5 5z"/>
+          </svg>
+          <p>Drag & drop your .svg here, or click to choose</p>
+          <input id="file-input" type="file" accept=".svg,image/svg+xml" />
+        </div>
+        <button id="optimize-btn" class="btn primary">Optimize SVG</button>
+        <div id="spinner" class="spinner hidden"></div>
+      </section>
+
+      <section id="result" class="result hidden">
+        <h2>Optimization Result</h2>
+        <div class="stats">
+          <div><strong>Original:</strong> <span id="orig-bytes">-</span></div>
+          <div><strong>Optimized:</strong> <span id="opt-bytes">-</span></div>
+          <div><strong>Saved:</strong> <span id="saved">-</span></div>
+        </div>
+        <a id="download-link" class="btn success" href="#" download>Download Optimized SVG</a>
+      </section>
+
+      <section class="support">
+        <h2>Support this tool</h2>
+        <p>Optional: buy me a coffee using Razorpay. No account needed.</p>
+        <button id="rzp-btn" class="btn">Contribute ₹49</button>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <a href="/robots.txt">Robots</a>
+        <a href="/sitemap.xml">Sitemap</a>
+      </div>
+    </footer>
+  </body>
+  </html>
+
+
