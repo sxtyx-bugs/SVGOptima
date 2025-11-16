@@ -1,0 +1,22 @@
+.mask-reveal {
+  position: relative;
+  color: #ffffff;
+  -webkit-mask-image: radial-gradient(200px circle at var(--mask-x, 50%) var(--mask-y, 50%), rgba(255,255,255,1), rgba(255,255,255,0) 60%);
+  mask-image: radial-gradient(200px circle at var(--mask-x, 50%) var(--mask-y, 50%), rgba(255,255,255,1), rgba(255,255,255,0) 60%);
+}
+
+.mask-wrap {
+  position: relative;
+}
+
+.mask-wrap .mask-reveal {
+  position: absolute;
+  inset: 0;
+}
+
+.cursor-glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(220px circle at var(--x, 50%) var(--y, 50%), rgba(255,255,255,0.12), rgba(255,255,255,0) 60%);
+}

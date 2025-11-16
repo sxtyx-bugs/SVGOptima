@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import SpotlightCard from './SpotlightCard';
+import { optimize } from 'svgo/lib/svgo.js';
 
 const DemoZone: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);
@@ -58,107 +59,92 @@ const DemoZone: React.FC = () => {
       alert('Please upload an SVG file');
       return;
     }
-    
+
     setFile(file);
     setIsProcessing(true);
     setOriginalSize(file.size);
-    setProcessingStage('Preparing file for optimization...');
-    
-    // Create FormData for server upload
-    const formData = new FormData();
-    formData.append('file', file);
-    
-    // Log the file size to verify it's being sent correctly
-    console.log(`Sending file to server: ${file.name}, size: ${(file.size / 1024).toFixed(2)} KB`);
-    
-    // Send to server for optimization
-    setProcessingStage('Uploading to optimization server...');
-    fetch('/api/optimize-svg', {
-      method: 'POST',
-      body: formData,
-    })
-      .then(response => {
-        if (!response.ok) {
-          throw new Error(`Server optimization failed: ${response.status} ${response.statusText}`);
-        }
-        setProcessingStage('Processing SVG with SVGO...');
-        return response.json();
-      })
-      .then(data => {
-        console.log('Server optimization complete:', data);
-        setProcessingStage('Downloading optimized file...');
-        // Get the optimized SVG from the server
-        return fetch(data.downloadUrl).then(response => {
-          if (!response.ok) {
-            throw new Error('Failed to download optimized SVG');
-          }
-          // IMPORTANT: Ensure we await the blob so we pass a real Blob to FileReader
-          return response.blob().then((blob) => {
-            // Verify the blob is valid before proceeding
-            if (!(blob instanceof Blob)) {
-              throw new Error('Downloaded content is not a valid Blob');
-            }
-            return { blob, stats: data };
+    setProcessingStage('Reading file...');
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const content = e.target?.result;
+      if (typeof content !== 'string') {
+        alert('Failed to read SVG content');
+        setIsProcessing(false);
+        setProcessingStage('');
+        return;
+      }
+
+      try {
+        setProcessingStage('Optimizing SVG...');
+
+        const run = (input: string, precision: number) => {
+          const result = optimize(input, {
+            multipass: true,
+            floatPrecision: precision,
+            plugins: [
+              {
+                name: 'preset-default',
+                params: {
+                  overrides: {
+                    removeViewBox: false,
+                  },
+                },
+              },
+              { name: 'convertPathData', params: { floatPrecision: precision } },
+              { name: 'cleanupNumericValues', params: { floatPrecision: precision } },
+              'removeDimensions',
+              'removeDesc',
+              'removeComments',
+              'mergePaths',
+              'removeUselessDefs',
+              'removeEmptyAttrs',
+              'removeEmptyText',
+              'removeHiddenElems',
+              'collapseGroups',
+              'minifyStyles',
+              'convertStyleToAttrs',
+              'inlineStyles',
+              'reusePaths',
+              'sortAttrs',
+            ],
           });
-        });
-      })
-      .then(({blob, stats}) => {
-        setProcessingStage('Finalizing optimization...');
-        // Read the blob as text
-        return new Promise((resolve, reject) => {
-          // Double-check that we have a valid Blob
-          if (!blob || !(blob instanceof Blob)) {
-            reject(new Error('Invalid blob object for FileReader'));
-            return;
-          }
-          
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            const content = e.target?.result;
-            if (typeof content !== 'string') {
-              reject(new Error('FileReader did not return text content'));
-              return;
-            }
-            resolve({
-              content: content,
-              stats: stats
-            });
-          };
-          reader.onerror = (e) => {
-            console.error('FileReader error:', e);
-            reject(new Error('Failed to read SVG content with FileReader'));
-          };
-          
-          // This is the critical fix - ensure we're passing a valid Blob to readAsText
-          reader.readAsText(blob, 'UTF-8');
-        });
-      })
-      .then((result: any) => {
-        const { content, stats } = result;
+          return typeof result.data === 'string' ? result.data : String(result.data);
+        };
+
+        const p3 = run(content, 3);
+        const p2 = run(p3, 2);
+
+        const originalBytes = new Blob([content]).size;
+        const c3 = new Blob([p3]).size;
+        const c2 = new Blob([p2]).size;
+
+        let best = { data: p3, size: c3 };
+        if (c2 < best.size) best = { data: p2, size: c2 };
         
-        // Verify we have content
-        if (!content) {
-          throw new Error('Received empty content from server');
-        }
-        
-        console.log(`Original: ${stats.originalBytes} bytes, Optimized: ${stats.optimizedBytes} bytes`);
-        
-        // Use server-provided stats if available, otherwise calculate locally
-        const newSize = stats.optimizedBytes || new Blob([content]).size;
-        const ratio = stats.percentSaved || ((file.size - newSize) / file.size) * 100;
-        
-        setOptimizedSvg(content);
-        setOptimizedSize(newSize);
+
+        const saved = originalBytes - best.size;
+        const ratio = saved > 0 ? (saved / originalBytes) * 100 : 0;
+
+        setOptimizedSvg(best.data);
+        setOptimizedSize(best.size);
         setCompressionRatio(parseFloat(ratio.toFixed(2)));
         setProcessingStage('');
         setIsProcessing(false);
-      })
-      .catch(error => {
-        console.error('Error during SVG optimization:', error);
-        alert('Error optimizing SVG: ' + error.message);
+      } catch (err: any) {
+        console.error('SVGO optimization error:', err);
+        alert('Error optimizing SVG: ' + (err?.message || 'Unknown error'));
         setProcessingStage('');
         setIsProcessing(false);
-      });
+      }
+    };
+    reader.onerror = (e) => {
+      console.error('FileReader error:', e);
+      alert('Failed to read SVG file');
+      setIsProcessing(false);
+      setProcessingStage('');
+    };
+    reader.readAsText(file, 'UTF-8');
   };
 
   const handleDownload = (e: React.MouseEvent) => {
@@ -196,6 +182,8 @@ const DemoZone: React.FC = () => {
               type="file" 
               accept=".svg" 
               onChange={handleFileChange}
+              onClick={(e) => { e.stopPropagation(); }}
+              onMouseDown={(e) => { e.stopPropagation(); }}
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
             />
             
@@ -270,7 +258,7 @@ const DemoZone: React.FC = () => {
               </div>
               <div className="text-green-400">
                 <p className="text-sm text-zinc-400">Compression</p>
-                <p className="text-xl font-semibold">-{compressionRatio}%</p>
+                <p className="text-xl font-semibold">{compressionRatio}%</p>
               </div>
               <div>
                 <p className="text-sm text-zinc-400">Optimized Size</p>

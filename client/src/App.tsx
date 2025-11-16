@@ -2,7 +2,6 @@ import React from 'react';
 import HeroSection from './components/HeroSection';
 import Features from './components/Features';
 import DemoZone from './components/DemoZone';
-import TrustedBy from './components/TrustedBy';
 import Footer from './components/Footer';
 import Squares from './components/Squares';
 
@@ -22,9 +21,8 @@ const App: React.FC = () => {
 
       <div className="relative z-10">
         <HeroSection />
-        <Features />
         <DemoZone />
-        <TrustedBy />
+        <Features />
         <Footer />
       </div>
     </div>
