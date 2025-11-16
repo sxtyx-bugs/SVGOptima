@@ -82,26 +82,29 @@ app.use((err, req, res, next) => {
   res.status(status).json({ error: err.message || 'Internal Server Error' });
 });
 
-const PORT = process.env.PORT || 5000;
-const server = app.listen(PORT, () => {
-  // eslint-disable-next-line no-console
-  console.log(`Server listening on port ${PORT}`);
-});
-
-// Graceful shutdown
-const shutdown = (signal) => {
-  // eslint-disable-next-line no-console
-  console.log(`${signal} received. Shutting down...`);
-  server.close(() => {
-    process.exit(0);
+// Only start HTTP server if not in serverless environment (Vercel)
+if (process.env.VERCEL !== '1' && !process.env.VERCEL_ENV) {
+  const PORT = process.env.PORT || 5000;
+  const server = app.listen(PORT, () => {
+    // eslint-disable-next-line no-console
+    console.log(`Server listening on port ${PORT}`);
   });
-  setTimeout(() => process.exit(1), 10000).unref();
-};
 
-['SIGINT', 'SIGTERM'].forEach((sig) => process.on(sig, () => shutdown(sig)));
+  // Graceful shutdown
+  const shutdown = (signal) => {
+    // eslint-disable-next-line no-console
+    console.log(`${signal} received. Shutting down...`);
+    server.close(() => {
+      process.exit(0);
+    });
+    setTimeout(() => process.exit(1), 10000).unref();
+  };
 
-// Start cleanup scheduler
-cleanupScheduler();
+  ['SIGINT', 'SIGTERM'].forEach((sig) => process.on(sig, () => shutdown(sig)));
+
+  // Start cleanup scheduler (only for non-serverless)
+  cleanupScheduler();
+}
 
 module.exports = app;
 
